@@ -4,6 +4,7 @@ import tempfile
 import io
 from pathlib import Path
 from audio_processor import AudioProcessor
+from video_downloader import VideoDownloader
 from utils import get_file_size, format_duration, is_supported_format
 
 # Configure page
@@ -21,6 +22,10 @@ if 'original_audio' not in st.session_state:
     st.session_state.original_audio = None
 if 'processor' not in st.session_state:
     st.session_state.processor = AudioProcessor()
+if 'downloader' not in st.session_state:
+    st.session_state.downloader = VideoDownloader()
+if 'video_info' not in st.session_state:
+    st.session_state.video_info = None
 
 def main():
     st.title("🎵 AI Audio Processor")
