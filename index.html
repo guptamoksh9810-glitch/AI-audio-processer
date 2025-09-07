@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 AI Audio Processor</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎵 AI Audio Processor</h1>
+            <p class="subtitle"><strong>Create slowed, sped-up, and bass-boosted versions of your favorite songs!</strong></p>
+            
+            <div class="feature-highlights">
+                <div class="feature">
+                    <span>🐌 <strong>Slowed Versions</strong></span>
+                    <small>Chill & relaxed vibes</small>
+                </div>
+                <div class="feature">
+                    <span>⚡ <strong>Sped Up Tracks</strong></span>
+                    <small>Energetic & upbeat</small>
+                </div>
+                <div class="feature">
+                    <span>💥 <strong>Ultra Bass Boost</strong></span>
+                    <small>Powerful deep sound</small>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Left Panel - Controls -->
+            <div class="controls-panel">
+                <div class="control-section">
+                    <h3>🎵 Speed Control</h3>
+                    
+                    <div class="preset-buttons">
+                        <p><strong>Quick Presets:</strong></p>
+                        <div class="button-group">
+                            <button class="preset-btn" onclick="setTempo(0.75)">🐌 Slowed<br>(0.75x)</button>
+                            <button class="preset-btn" onclick="setTempo(1.0)">⏸️ Normal<br>(1.0x)</button>
+                            <button class="preset-btn" onclick="setTempo(1.25)">⚡ Sped Up<br>(1.25x)</button>
+                        </div>
+                    </div>
+
+                    <div class="slider-control">
+                        <p><strong>Custom Speed:</strong></p>
+                        <input type="range" id="tempoSlider" min="0.25" max="2.5" step="0.05" value="1.0" oninput="updateTempo(this.value)">
+                        <div class="tempo-display">
+                            <span id="tempoDisplay">🎵 Normal Speed</span>
+                            <small id="tempoDescription">Original tempo</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>🔊 Bass Enhancement</h3>
+                    
+                    <div class="preset-buttons">
+                        <p><strong>Quick Presets:</strong></p>
+                        <div class="button-group">
+                            <button class="preset-btn" onclick="setBass(0)">🎵 Clean<br>(No Bass)</button>
+                            <button class="preset-btn" onclick="setBass(5)">🎸 Boosted<br>(+5 dB)</button>
+                            <button class="preset-btn" onclick="setBass(10)">💥 Ultra Bass<br>(+10 dB)</button>
+                        </div>
+                    </div>
+
+                    <div class="slider-control">
+                        <p><strong>Custom Bass:</strong></p>
+                        <input type="range" id="bassSlider" min="0" max="15" step="1" value="5" oninput="updateBass(this.value)">
+                        <div class="bass-display">
+                            <span id="bassDisplay">🎸 Medium Boost (+5 dB)</span>
+                            <small id="bassDescription">Noticeable bass bump</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>⚙️ Quality Settings</h3>
+                    <select id="qualitySelect">
+                        <option value="standard">Standard</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Right Panel - Audio Processing -->
+            <div class="audio-panel">
+                <!-- Upload Section -->
+                <div class="upload-section">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('upload')">📤 Upload File</button>
+                        <button class="tab-btn" onclick="switchTab('url')">🔗 From URL</button>
+                    </div>
+
+                    <div id="uploadTab" class="tab-content active">
+                        <h3>Upload Audio File</h3>
+                        <div class="file-upload" id="fileUpload">
+                            <input type="file" id="audioFile" accept="audio/*" onchange="handleFileUpload(event)">
+                            <div class="upload-text">
+                                <p>Choose an audio file</p>
+                                <small>Supported formats: MP3, WAV, FLAC, M4A, OGG</small>
+                            </div>
+                        </div>
+                        <div id="fileInfo" class="file-info" style="display: none;"></div>
+                    </div>
+
+                    <div id="urlTab" class="tab-content">
+                        <h3>Download from Video URL</h3>
+                        <div class="url-input">
+                            <input type="text" id="videoUrl" placeholder="https://www.youtube.com/watch?v=...">
+                            <button onclick="handleUrlInput()">📋 Get Video Info</button>
+                        </div>
+                        <div class="url-note">
+                            <p><strong>Note:</strong> Direct video downloading requires server-side processing. For full functionality, please use the file upload option or visit our full-featured app.</p>
+                        </div>
+                        
+                        <div class="supported-sites">
+                            <details>
+                                <summary>📺 Supported Video Platforms</summary>
+                                <div class="sites-info">
+                                    <p><strong>Primary platforms:</strong></p>
+                                    <ul>
+                                        <li>YouTube (youtube.com, youtu.be)</li>
+                                        <li>SoundCloud (soundcloud.com)</li>
+                                        <li>Vimeo (vimeo.com)</li>
+                                        <li>TikTok (tiktok.com)</li>
+                                    </ul>
+                                    <p><strong>Additional platforms:</strong></p>
+                                    <ul>
+                                        <li>Facebook Videos</li>
+                                        <li>Instagram</li>
+                                        <li>Dailymotion</li>
+                                        <li>Twitter/X Videos</li>
+                                    </ul>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Player Section -->
+                <div class="audio-section">
+                    <div id="originalAudio" style="display: none;">
+                        <h3>🎧 Original Audio</h3>
+                        <audio id="originalPlayer" controls style="width: 100%;"></audio>
+                    </div>
+
+                    <div id="processedAudio" style="display: none;">
+                        <h3>🎧 Processed Audio</h3>
+                        <audio id="processedPlayer" controls style="width: 100%;"></audio>
+                        <button id="downloadBtn" class="download-btn" onclick="downloadProcessedAudio()">💾 Download Processed Audio</button>
+                    </div>
+                </div>
+
+                <!-- Process Button -->
+                <div class="process-section">
+                    <button id="processBtn" class="process-btn" onclick="processAudio()" disabled>🚀 Process Audio</button>
+                    <div id="processingStatus" class="processing-status" style="display: none;">
+                        <div class="spinner"></div>
+                        <span id="statusText">Processing audio...</span>
+                    </div>
+                </div>
+
+                <!-- Info Message -->
+                <div id="infoMessage" class="info-message">
+                    👆 Please upload an audio file or download from a video URL first
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Tips -->
+        <div class="tips-section">
+            <details>
+                <summary>💡 Processing Tips & Popular Combinations</summary>
+                <div class="tips-content">
+                    <div class="tip-group">
+                        <h4>🎵 Popular Speed Settings:</h4>
+                        <ul>
+                            <li><strong>Slowed (0.75x):</strong> Perfect for chill, relaxed vibes</li>
+                            <li><strong>Sped Up (1.25x):</strong> Popular for energetic, upbeat versions</li>
+                            <li><strong>Super Fast (1.5x+):</strong> High-energy, intense feeling</li>
+                            <li><strong>Custom speeds:</strong> Fine-tune between presets for your perfect sound</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-group">
+                        <h4>🔊 Bass Enhancement Guide:</h4>
+                        <ul>
+                            <li><strong>Clean (0 dB):</strong> Keep original bass levels</li>
+                            <li><strong>Boosted (+5 dB):</strong> Moderate enhancement, great for most songs</li>
+                            <li><strong>Ultra Bass (+10 dB):</strong> Heavy bass for that deep, powerful sound</li>
+                            <li><strong>Custom levels:</strong> Adjust to match your style preference</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-group">
+                        <h4>🎯 Popular Combinations:</h4>
+                        <ul>
+                            <li><strong>Slowed + Ultra Bass:</strong> The viral "slowed + reverb" effect</li>
+                            <li><strong>Sped Up + Clean Bass:</strong> Energetic without overpowering bass</li>
+                            <li><strong>Normal Speed + Boosted Bass:</strong> Enhanced original with better bass</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-group">
+                        <h4>⚙️ Quality Settings:</h4>
+                        <ul>
+                            <li><strong>Standard:</strong> Faster processing, good quality (recommended)</li>
+                            <li><strong>High:</strong> Slower processing, maximum quality (for special tracks)</li>
+                        </ul>
+                    </div>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
