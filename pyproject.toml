@@ -9,4 +9,5 @@ dependencies = [
     "scipy>=1.16.1",
     "soundfile>=0.13.1",
     "streamlit>=1.49.1",
+    "yt-dlp>=2025.9.5",
 ]
