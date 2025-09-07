@@ -168,34 +168,88 @@ def main():
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.header("📤 Upload Audio")
+        # Create tabs for upload methods
+        upload_tab, url_tab = st.tabs(["📤 Upload File", "🔗 From URL"])
         
-        # File uploader
-        uploaded_file = st.file_uploader(
-            "Choose an audio file",
-            type=['mp3', 'wav', 'flac', 'm4a', 'ogg'],
-            help="Supported formats: MP3, WAV, FLAC, M4A, OGG"
-        )
+        with upload_tab:
+            st.header("Upload Audio File")
+            
+            # File uploader
+            uploaded_file = st.file_uploader(
+                "Choose an audio file",
+                type=['mp3', 'wav', 'flac', 'm4a', 'ogg'],
+                help="Supported formats: MP3, WAV, FLAC, M4A, OGG"
+            )
+            
+            if uploaded_file is not None:
+                # Display file info
+                file_size = get_file_size(uploaded_file)
+                st.success(f"✅ File uploaded: **{uploaded_file.name}** ({file_size})")
+                
+                # Store original audio in session state
+                st.session_state.original_audio = uploaded_file
+                st.session_state.video_info = None  # Clear video info
+                
+                # Play original audio
+                st.subheader("🎧 Original Audio")
+                st.audio(uploaded_file, format=f'audio/{uploaded_file.name.split(".")[-1]}')
         
-        if uploaded_file is not None:
-            # Display file info
-            file_size = get_file_size(uploaded_file)
-            st.success(f"✅ File uploaded: **{uploaded_file.name}** ({file_size})")
+        with url_tab:
+            st.header("Download from Video URL")
             
-            # Store original audio in session state
-            st.session_state.original_audio = uploaded_file
+            # URL input
+            video_url = st.text_input(
+                "Enter video URL",
+                placeholder="https://www.youtube.com/watch?v=...",
+                help="Supports YouTube, SoundCloud, TikTok, and many other platforms"
+            )
             
-            # Play original audio
-            st.subheader("🎧 Original Audio")
-            st.audio(uploaded_file, format=f'audio/{uploaded_file.name.split(".")[-1]}')
+            if video_url:
+                if st.session_state.downloader.is_valid_url(video_url):
+                    # Get video info button
+                    if st.button("📋 Get Video Info", type="secondary"):
+                        with st.spinner("Getting video information..."):
+                            try:
+                                info = st.session_state.downloader.get_video_info(video_url)
+                                st.session_state.video_info = info
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ Error getting video info: {str(e)}")
+                    
+                    # Display video info if available
+                    if st.session_state.video_info:
+                        info = st.session_state.video_info
+                        st.success("✅ Video information loaded!")
+                        
+                        # Video details
+                        st.write(f"**Title:** {info['title'][:80]}{'...' if len(info['title']) > 80 else ''}")
+                        st.write(f"**Duration:** {st.session_state.downloader.format_duration(info['duration'])}")
+                        st.write(f"**Uploader:** {info['uploader']}")
+                        
+                        # Download audio button
+                        if st.button("⬇️ Download Audio", type="primary"):
+                            download_audio_from_url(video_url, info['title'])
+                else:
+                    st.warning("⚠️ Please enter a valid video URL")
+            
+            # Supported sites info
+            with st.expander("📺 Supported Video Platforms"):
+                sites_info = st.session_state.downloader.get_supported_sites_info()
+                st.write("**Primary platforms:**")
+                for site in sites_info['primary_sites']:
+                    st.write(f"• {site}")
+                st.write("**Additional platforms:**")
+                for site in sites_info['additional_sites']:
+                    st.write(f"• {site}")
+                st.info(sites_info['note'])
     
     with col2:
         st.header("⚡ Process Audio")
         
-        if uploaded_file is not None:
+        if st.session_state.original_audio is not None:
             # Process button
             if st.button("🚀 Process Audio", type="primary", use_container_width=True):
-                process_audio(uploaded_file, tempo_factor, bass_boost, quality)
+                process_audio(st.session_state.original_audio, tempo_factor, bass_boost, quality)
             
             # Show processed audio if available
             if st.session_state.processed_audio is not None:
@@ -203,15 +257,17 @@ def main():
                 st.audio(st.session_state.processed_audio, format='audio/wav')
                 
                 # Download button
+                original_name = st.session_state.original_audio.name if hasattr(st.session_state.original_audio, 'name') else "audio"
+                file_name_base = original_name.rsplit('.', 1)[0] if '.' in original_name else original_name
                 st.download_button(
                     label="💾 Download Processed Audio",
                     data=st.session_state.processed_audio,
-                    file_name=f"processed_{uploaded_file.name.rsplit('.', 1)[0]}.wav",
+                    file_name=f"processed_{file_name_base}.wav",
                     mime="audio/wav",
                     use_container_width=True
                 )
         else:
-            st.info("👆 Please upload an audio file first")
+            st.info("👆 Please upload an audio file or download from a video URL first")
     
     # Processing tips
     with st.expander("💡 Processing Tips & Popular Combinations"):
@@ -294,6 +350,70 @@ def process_audio(uploaded_file, tempo_factor, bass_boost, quality):
     except Exception as e:
         st.error(f"❌ Error processing audio: {str(e)}")
         st.error("Please try with a different file or adjust the settings.")
+
+def download_audio_from_url(video_url, video_title):
+    """Download audio from video URL and prepare for processing"""
+    try:
+        # Show download status
+        with st.spinner("🔄 Downloading audio... This may take a moment."):
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            status_text.text("Getting video information...")
+            progress_bar.progress(20)
+            
+            # Download audio using the video downloader
+            temp_dir = tempfile.mkdtemp()
+            
+            status_text.text("Downloading audio from video...")
+            progress_bar.progress(60)
+            
+            audio_file_path = st.session_state.downloader.download_audio(video_url, temp_dir)
+            
+            status_text.text("Converting audio for processing...")
+            progress_bar.progress(80)
+            
+            # Read the downloaded audio file as bytes
+            with open(audio_file_path, 'rb') as f:
+                audio_bytes = f.read()
+            
+            # Create a file-like object that mimics uploaded file
+            class AudioFile:
+                def __init__(self, data, name):
+                    self._data = data
+                    self.name = name
+                
+                def getvalue(self):
+                    return self._data
+                
+                def read(self):
+                    return self._data
+            
+            # Clean filename for processing
+            safe_filename = f"{video_title[:50]}.wav"
+            downloaded_audio = AudioFile(audio_bytes, safe_filename)
+            
+            # Store as original audio for processing
+            st.session_state.original_audio = downloaded_audio
+            st.session_state.video_info = None  # Clear video info after download
+            
+            # Clean up temporary files
+            st.session_state.downloader.cleanup_temp_files(temp_dir)
+            
+            progress_bar.progress(100)
+            status_text.text("✅ Audio downloaded successfully!")
+            
+            st.success("🎉 Audio downloaded and ready for processing!")
+            
+            # Show audio player
+            st.subheader("🎧 Downloaded Audio")
+            st.audio(audio_bytes, format='audio/wav')
+            
+            st.rerun()
+            
+    except Exception as e:
+        st.error(f"❌ Error downloading audio: {str(e)}")
+        st.error("Please check the URL and try again.")
 
 if __name__ == "__main__":
     main()
